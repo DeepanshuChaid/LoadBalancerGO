@@ -9,7 +9,7 @@ import (
 
 type Backend interface {
 	SetAlive(bool)
-	isAlive() bool
+	IsAlive() bool
 	GetUR() *url.URL
 	GetActiveConnections() int
 	Serve(http.ResponseWriter, *http.Request)
