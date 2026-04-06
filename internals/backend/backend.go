@@ -1,17 +1,16 @@
-package main
+package backend
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
 )
 
-type Backend interface  {
+type Backend interface {
 	SetAlive(bool)
-	isAlive(bool)
-	GetUrl() *url.URL
+	isAlive() bool
+	GetUR() *url.URL
 	GetActiveConnections() int
 	Serve(http.ResponseWriter, *http.Request)
 }
@@ -19,22 +18,14 @@ type Backend interface  {
 type backend struct {
 	url *url.URL
 	alive bool
-	//  WE USE MUTEX TO PREVENT RACE CONDITIONS
 	mux sync.RWMutex
 	connections int
 	reverseProxy *httputil.ReverseProxy
 }
 
-
 type ServerPool interface {
-	Getbackends() []Backend
-	// the getNextVAlidPeer method is used to find  an available server according to the choosen strategy.
+	GetBackend() []backend
 	GetNextValidPeer() backend
-	AddBackend(Backend)
+	AddBackend(backend)
 	GetServerPoolSize() int
-}
-
-
-func main() {
-	fmt.Println("I LIKE >>>> I DONT KNOW I FORGOT I GUESS")
 }
