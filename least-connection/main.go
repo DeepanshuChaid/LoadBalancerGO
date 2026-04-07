@@ -27,3 +27,17 @@ func (b *Backend) SetAlive(alive bool) {
 	b.Alive = alive
 }
 
+// SERVERPOOL MANAGES ALL OF THE BACKEND
+type ServerPool struct {
+	backends []*Backend
+	mu sync.RWMutex
+	current uint64
+}
+
+// ADDBACKEND ADDS A NEW BACKEND TO THE POOL
+func (s *ServerPool) AddBackend(backend *Backend) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.backends = append(s.backends, backend)
+}
