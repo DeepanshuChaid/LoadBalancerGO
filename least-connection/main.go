@@ -57,6 +57,10 @@ func (s *ServerPool) GetNextPeer() {
 
 			// IF THIS IS THE FIRST HEALTHY BACKEND OR IT HAS FEWER CONNECTIONS
 			// THAN OUR CURRENT BEST WE FOUND A NEW BEST BACKEND
+			if miniConnections == -1 || conn < miniConnections {
+				miniConnections = conn
+				bestBackend = b
+			}
 		}
 	}
 }
