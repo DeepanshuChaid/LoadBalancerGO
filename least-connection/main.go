@@ -43,12 +43,12 @@ func (s *ServerPool) AddBackend(backend *Backend) {
 	s.backends = append(s.backends, backend)
 }
 
-func (s *ServerPool) GetNextPeer() {
+func (s *ServerPool) GetNextPeer() *Backend {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	var bestBackend *Backend
-	var miniConnections int64 = -1
+	var minConnections int64 = -1
 
 	for _, b := range s.backends {
 		if b.IsAlive() {
@@ -57,10 +57,11 @@ func (s *ServerPool) GetNextPeer() {
 
 			// IF THIS IS THE FIRST HEALTHY BACKEND OR IT HAS FEWER CONNECTIONS
 			// THAN OUR CURRENT BEST WE FOUND A NEW BEST BACKEND
-			if miniConnections == -1 || conn < miniConnections {
-				miniConnections = conn
+			if minConnections == -1 || conn < minConnections {
+				minConnections = conn
 				bestBackend = b
 			}
 		}
 	}
+	return bestBackend
 }
