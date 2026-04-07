@@ -25,6 +25,7 @@ type Backend struct {
 	URL          *url.URL
 	Alive        bool
 	mux          sync.RWMutex
+	// It wraps httputil.ReverseProxy, which is a built-in Go tool that takes an incoming request and forwards it to another server.
 	ReverseProxy *httputil.ReverseProxy
 }
 
@@ -43,7 +44,8 @@ func (b *Backend) IsAlive() (alive bool) {
 	return
 }
 
-// ServerPool holds information about reachable backends
+// It holds a slice of all backends and a current counter.
+// The current field is managed using Atomic Operations (atomic.AddUint64). This allows the load balancer to pick the "next" server in line safely across multiple CPU cores without slow locking.
 type ServerPool struct {
 	backends []*Backend
 	current  uint64
@@ -64,7 +66,7 @@ func (s *ServerPool) MarkBackendStatus(backendUrl *url.URL, alive bool) {
 	for _, b := range s.backends {
 		if b.URL.String() == backendUrl.String() {
 			b.SetAlive(alive)
-			break
+			break // stop if we found the backend
 		}
 	}
 }
@@ -84,6 +86,18 @@ func (s *ServerPool) GetNextPeer() *Backend {
 		}
 	}
 	return nil
+}
+
+// isAlive checks whether a backend is Alive by establishing a TCP connection
+func isBackendAlive(u *url.URL) bool {
+	timeout := 2 * time.Second
+	conn, err := net.DialTimeout("tcp", u.Host, timeout)
+	if err != nil {
+		log.Println("Site unreachable, error: ", err)
+		return false
+	}
+	defer conn.Close()
+	return true
 }
 
 // HealthCheck pings the backends and update the status
@@ -130,18 +144,6 @@ func lb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Error(w, "Service not available", http.StatusServiceUnavailable)
-}
-
-// isAlive checks whether a backend is Alive by establishing a TCP connection
-func isBackendAlive(u *url.URL) bool {
-	timeout := 2 * time.Second
-	conn, err := net.DialTimeout("tcp", u.Host, timeout)
-	if err != nil {
-		log.Println("Site unreachable, error: ", err)
-		return false
-	}
-	defer conn.Close()
-	return true
 }
 
 // healthCheck runs a routine for check status of the backends every 2 mins
