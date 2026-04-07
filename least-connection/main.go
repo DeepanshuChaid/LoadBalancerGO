@@ -4,6 +4,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"sync"
+	"sync/atomic"
 )
 
 // BACKEND REPRESENTS A SINGLE SERVER
@@ -40,4 +41,22 @@ func (s *ServerPool) AddBackend(backend *Backend) {
 	defer s.mu.Unlock()
 
 	s.backends = append(s.backends, backend)
+}
+
+func (s *ServerPool) GetNextPeer() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var bestBackend *Backend
+	var miniConnections int64 = -1
+
+	for _, b := range s.backends {
+		if b.IsAlive() {
+			// Load the connections safely using atomic operations
+			conn := atomic.LoadInt64(&b.ActiveConnections)
+
+			// IF THIS IS THE FIRST HEALTHY BACKEND OR IT HAS FEWER CONNECTIONS
+			// THAN OUR CURRENT BEST WE FOUND A NEW BEST BACKEND
+		}
+	}
 }
