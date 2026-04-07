@@ -211,6 +211,7 @@ func main() {
 		log.Printf("Configured server: %s\n", serverUrl)
 	}
 
+	// In Go, if you start a server with a single handler and no specific patterns, every single request—regardless of the path (/blog/search, /user/profile, /login)—gets dumped into that lb function.
 	// create http server
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
